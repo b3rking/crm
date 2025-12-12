@@ -1,0 +1,22 @@
+
+.input-filter {
+  border: 2px solid #7c4a2f;
+  border-radius: 4px;
+}
+.input-filter:focus{
+  border: 2px solid #7c4a2f;
+  border-radius: 4px;
+}
+
+.btn-chocolate {
+	background-color: #7c4a2f;
+}
+.modal-bg-color{
+	background-color: #F4F4F4;
+}
+.field-border{
+	border: 4px solid #FFFFFF;
+}
+.label-color{
+	color: #EFAC7B;
+}
