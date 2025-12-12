@@ -3,6 +3,11 @@
 require_once("../../model/connection.php");
 require_once("../../model/contract.class.php");
 
+// Load invoice config (OTT amount) each request so edits reflect immediately
+if (file_exists(__DIR__ . '/../../config/_config_invoice.php')) {
+    include __DIR__ . '/../../config/_config_invoice.php';
+}
+
 $contract = new Contract();
 
 $invoice = $contract->getInvoiceToSendToObr($_GET['id'])->fetch();
@@ -186,7 +191,8 @@ $data = [
     "tp_activity_sector" => "TELECOMMUNICATION",
     "tp_legal_form" => "SA",
     "payment_type" => "4",
-    "invoice_currency" => $value->monnaie,
+    // invoice currency: prefer explicit invoice field, fallback to last item currency
+    "invoice_currency" => isset($invoice['monnaie']) ? $invoice['monnaie'] : (isset($value->monnaie) ? $value->monnaie : ''),
     "customer_name" => $invoice['nom_client'],
     "customer_TIN" => $invoice['nif'],
     "customer_address" => $invoice['adresse'],
@@ -197,5 +203,36 @@ $data = [
     "invoice_signature_date" => $invoice['date_creation'],
     "invoice_items" => $items_res,
 ];
+
+// If configured, add invoice-level OTT for USD invoices
+$invoice_currency = strtolower($data['invoice_currency']);
+$invoice_ott = 0;
+if ($invoice_currency === 'usd' && isset($_invoice_ott_usd)) {
+    $invoice_ott = floatval($_invoice_ott_usd);
+    if ($invoice_ott > 0) {
+        // append OTT as a separate invoice item so OBR receives it in the items array
+        $ott_item = [
+            "item_designation" => "OTT",
+            "item_quantity" => 1,
+            "item_ott_tax" => round($invoice_ott),
+            "item_price" => round($invoice_ott),
+            "item_price_nvat" => round($invoice_ott),
+            "vat" => 0,
+            "item_price_wvat" => round($invoice_ott),
+            "item_total_amount" => round($invoice_ott),
+        ];
+        $items_res[] = $ott_item;
+        // update the payload items
+        $data['invoice_items'] = $items_res;
+    }
+}
+
+// compute invoice total amount from items
+$total_amount = 0;
+foreach ($items_res as $it) {
+    $total_amount += floatval($it['item_total_amount']);
+}
+$data['invoice_ott'] = $invoice_ott;
+$data['invoice_total_amount'] = round($total_amount);
 
 echo json_encode($data);

@@ -21,6 +21,7 @@ require_once('controller/partenaire.controller.php');
 require_once('controller/pannee.controller.php');
 require_once('controller/facture.controller.php');
 require_once('controller/finance.controller.php');
+require_once('controller/mail.controller.php');
 require_once('controller/historique.controller.php');
 require_once('controller/utilisateur.controller.php');
 require_once('controller/typeClient.controller.php');
