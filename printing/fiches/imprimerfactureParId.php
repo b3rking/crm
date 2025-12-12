@@ -209,7 +209,7 @@ class myPDF extends FPDF
     function viewTable($contract, $facture_id, $columns = null)
     {
         $client = $this->getClient();
-        $this->Cell(180, 5, 'Facture No ' . $client['numero'] . ' du ' . $client['date_creation'], 0, 1, 'C');
+        $this->Cell(180, 5, 'Facture Numero ' . $client['numero'] . ' du ' . $client['date_creation'], 0, 1, 'C');
         $this->Ln(10);
 
         $this->Cell(60, 5, 'A. Identification du Vendeur', 0, 1);
