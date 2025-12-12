@@ -142,6 +142,30 @@ class myPDF extends FPDF
         return $arr;
     }
 
+    // Try to find a cachet image file under assets (returns full path or false)
+    function findCachetPath()
+    {
+        $candidates = [
+            ROOT . 'assets' . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'cachet.png',
+            ROOT . 'assets' . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'cachet.jpg',
+            ROOT . 'assets' . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'cachet.jpeg',
+            ROOT . 'assets' . DIRECTORY_SEPARATOR . 'icons' . DIRECTORY_SEPARATOR . 'cachet.png',
+            ROOT . 'assets' . DIRECTORY_SEPARATOR . 'icons' . DIRECTORY_SEPARATOR . 'cachet.jpg',
+            ROOT . 'assets' . DIRECTORY_SEPARATOR . 'cachet.png',
+            ROOT . 'assets' . DIRECTORY_SEPARATOR . 'cachet.jpg',
+        ];
+
+        foreach ($candidates as $p) {
+            if (file_exists($p)) return $p;
+        }
+
+        // fallback: try a glob search for any file containing "cachet" under assets
+        $glob = glob(ROOT . 'assets' . DIRECTORY_SEPARATOR . '**' . DIRECTORY_SEPARATOR . '*cachet*.*');
+        if ($glob && count($glob) > 0) return $glob[0];
+
+        return false;
+    }
+
 
     function header()
     {
@@ -200,6 +224,22 @@ class myPDF extends FPDF
             if ($this->GetY() == 277.00008333333)
                 $this->SetXY(60, $y);
             $this->Cell(60, 4, $value->nom . ' - ' . $value->numero . ' ' . $value->monnaie, 0, 1);
+        }
+
+        // draw cachet if found (bottom-right)
+        $cachet = $this->findCachetPath();
+        if ($cachet) {
+            $w = 40; // mm
+            $h = 40; // mm
+            $x = $this->w - $this->rMargin - $w;
+            $y = $this->h - $this->bMargin - $h - 5; // slightly above bottom margin
+            if (file_exists($cachet)) {
+                try {
+                    $this->Image($cachet, $x, $y, $w, $h);
+                } catch (Exception $e) {
+                    // ignore image rendering errors
+                }
+            }
         }
     }
     function headerTable()
