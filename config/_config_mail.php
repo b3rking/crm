@@ -18,13 +18,13 @@
 // ------------------------------------------------------------------------
 
 // You can keep using your real "from" address here; Mailtrap will intercept it.
-$_from        = 'crm@spidernet-bi.com';
+$_from        = 'spidernet@mediabox.bi';
 
 // Mailtrap SMTP settings (from your Mailtrap dashboard)
-$_host        = 'sandbox.smtp.mailtrap.io';
-$_port        = 2525;
-$_username    = 'b23c85c42dd754';
-$_password    = 'eec714d58ad230'; // replace with the full password from Mailtrap
+$_host        = 'vps.mediabox.bi';
+$_port        = 587;
+$_username    = 'spidernet@mediabox.bi';
+$_password    = '{UAn[AKQCbBB*d;b'; // replace with the full password from Mailtrap
 
 // Use TLS for Mailtrap (PHPMailer will map this correctly)
 $_smtp_secure = 'tls';
