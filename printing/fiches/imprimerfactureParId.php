@@ -8,6 +8,9 @@ if (!defined('ROOT')) {
 define('FPDF_FONTPATH', ROOT . 'printing' . DIRECTORY_SEPARATOR . 'fiches' . DIRECTORY_SEPARATOR . 'font');
 require('fpdf.php');
 
+// Increase memory limit for PDF generation (temporary safety net)
+@ini_set('memory_limit', '256M');
+
 // Invoice configuration (OTT etc.)
 if (file_exists(ROOT . 'config' . DIRECTORY_SEPARATOR . '_config_invoice.php')) {
     include_once ROOT . 'config' . DIRECTORY_SEPARATOR . '_config_invoice.php';
@@ -166,21 +169,90 @@ class myPDF extends FPDF
         return false;
     }
 
+    // Resize large images to a reasonable size and return path to (possibly) new temp file
+    // Returns original path if no resizing was necessary. Caller is responsible for unlinking
+    // the returned path if it's a generated temp file (we return an array [path, is_temp]).
+    function ensureSmallImage($path, $maxWidth = 1000, $maxHeight = 1000)
+    {
+        if (!file_exists($path)) return [$path, false];
+        $info = @getimagesize($path);
+        if (!$info) return [$path, false];
+        $width = $info[0];
+        $height = $info[1];
+        if ($width <= $maxWidth && $height <= $maxHeight) return [$path, false];
+
+        // Try GD to resize, preserving transparency for PNG/GIF
+        $mime = $info['mime'];
+        switch ($mime) {
+            case 'image/jpeg':
+                $src = @imagecreatefromjpeg($path);
+                $outType = 'jpeg';
+                break;
+            case 'image/png':
+                $src = @imagecreatefrompng($path);
+                $outType = 'png';
+                break;
+            case 'image/gif':
+                $src = @imagecreatefromgif($path);
+                $outType = 'png';
+                break;
+            default:
+                return [$path, false];
+        }
+        if (!$src) return [$path, false];
+
+        $ratio = min($maxWidth / $width, $maxHeight / $height);
+        $nw = (int)ceil($width * $ratio);
+        $nh = (int)ceil($height * $ratio);
+        $dst = imagecreatetruecolor($nw, $nh);
+
+        if ($outType === 'png') {
+            // preserve alpha channel for PNG
+            imagealphablending($dst, false);
+            imagesavealpha($dst, true);
+            $transparent = imagecolorallocatealpha($dst, 0, 0, 0, 127);
+            imagefilledrectangle($dst, 0, 0, $nw, $nh, $transparent);
+        } else {
+            // white background for JPEG
+            $white = imagecolorallocate($dst, 255, 255, 255);
+            imagefilledrectangle($dst, 0, 0, $nw, $nh, $white);
+        }
+
+        imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $width, $height);
+
+        $tmp = tempnam(sys_get_temp_dir(), 'pdfimg_');
+        if ($outType === 'png') {
+            $tmp .= '.png';
+            imagepng($dst, $tmp, 6);
+        } else {
+            $tmp .= '.jpg';
+            imagejpeg($dst, $tmp, 85);
+        }
+        imagedestroy($src);
+        imagedestroy($dst);
+
+        return [$tmp, true];
+    }
+
 
     function header()
     {
-
         $logo = ROOT . 'printing' . DIRECTORY_SEPARATOR . 'fiches' . DIRECTORY_SEPARATOR . 'logospnet.png';
         if (file_exists($logo)) {
-            $this->image($logo, 15.0, 10, 40);
+            list($useLogo, $logoIsTemp) = $this->ensureSmallImage($logo, 400, 400);
+            try {
+                $this->Image($useLogo, 15.0, 10, 40);
+            } catch (Exception $e) {
+                // ignore image errors
+            }
+            if (!empty($logoIsTemp) && $logoIsTemp === true && file_exists($useLogo)) {
+                @unlink($useLogo);
+            }
         }
-        //$this->image('image_profil/702.jpg',5,10,200,280);
         $this->SetFont('Arial', 'B', 10);
         $this->setY(5);
 
         $this->Cell(60, 5, '', 0, 0, 'C');
-        //$this->Cell(60,10,'FACTURE No '.$this->getFactureId().'  du '.date('d-m-Y'),0,1,'C');
-        //$this->Line(61,30,149,30);
     }
     function footer()
     {
@@ -226,19 +298,21 @@ class myPDF extends FPDF
             $this->Cell(60, 4, $value->nom . ' - ' . $value->numero . ' ' . $value->monnaie, 0, 1);
         }
 
-        // draw cachet if found (bottom-right)
+        // draw cachet if found (bottom-right), same pattern as logo in header()
         $cachet = $this->findCachetPath();
         if ($cachet) {
             $w = 40; // mm
             $h = 40; // mm
             $x = $this->w - $this->rMargin - $w;
             $y = $this->h - $this->bMargin - $h - 5; // slightly above bottom margin
-            if (file_exists($cachet)) {
-                try {
-                    $this->Image($cachet, $x, $y, $w, $h);
-                } catch (Exception $e) {
-                    // ignore image rendering errors
-                }
+            list($useCachet, $cachetIsTemp) = $this->ensureSmallImage($cachet, 400, 400);
+            try {
+                $this->Image($useCachet, $x, $y, $w, $h);
+            } catch (Exception $e) {
+                // ignore image errors
+            }
+            if (!empty($cachetIsTemp) && $cachetIsTemp === true && file_exists($useCachet)) {
+                @unlink($useCachet);
             }
         }
     }
