@@ -27,6 +27,12 @@ foreach ($comptabilite->getMonnaies() as $value)
 {
     $tbMonnaie[] = $value->libelle;
 }
+
+// Add EUR if not already present
+if (!in_array('EUR', array_map('strtolower', $tbMonnaie))) {
+    $tbMonnaie[] = 'EUR';
+}
+
 $mode = ['impression','mail','manuel'];
 //$periode = ['mensuelle','trimestrielle','semestrielle','annuelle'];
 $periode = ['mensuelle' => 1,'trimestrielle' => 3,'semestrielle' => 6,'annuelle' => 12];
@@ -495,7 +501,7 @@ $status = ['active' => 0,'annuler' => 1];
 		                        </td>
 		                        <td><?php echo $value->date_creation?></td>
 		                        <td>
-		                        	<?= number_format(round($montant_total)).' '.strtoupper ($value->monnaie)?>
+		                        	<?= number_format(round($montant_total)) . ' ' . strtoupper($value->monnaie == 'eur' ? 'EUR' : $value->monnaie) ?>
 		                        </td>
 		                        <td><?= $value->monnaie?></td>
 		                        <td><?= $value->etat?></td>

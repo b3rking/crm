@@ -275,3 +275,32 @@ function updateAmountContract()
         {}
     }
 }
+
+/**
+ * Convert amount from one currency to another (for invoicing)
+ * Supported: BIF, USD, EUR
+ * Rates as of December 2025 – update periodically or make dynamic later
+ */
+function convertCurrency($amount, $fromCurrency, $toCurrency)
+{
+    $from = strtolower($fromCurrency);
+    $to   = strtolower($toCurrency);
+
+    // No conversion needed
+    if ($from === $to) {
+        return $amount;
+    }
+
+    // Exchange rates (BIF base) – update these regularly!
+    $rates = [
+        'bif' => 1,
+        'usd' => 2947,   // 1 USD ≈ 2947 BIF (Dec 2025 approx)
+        'eur' => 3300,   // 1 EUR ≈ 3300 BIF (Dec 2025 approx)
+    ];
+
+    // Convert to BIF first
+    $inBif = $amount * $rates[$from];
+
+    // Then convert to target currency
+    return $inBif / $rates[$to];
+}

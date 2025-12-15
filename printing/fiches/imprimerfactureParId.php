@@ -7,6 +7,9 @@ if (!defined('ROOT')) {
 // FPDF font path
 define('FPDF_FONTPATH', ROOT . 'printing' . DIRECTORY_SEPARATOR . 'fiches' . DIRECTORY_SEPARATOR . 'font');
 require('fpdf.php');
+if (file_exists(ROOT . 'controller/contract.controller.php')) {
+    require_once ROOT . 'controller/contract.controller.php';
+}
 
 // Increase memory limit for PDF generation (temporary safety net)
 @ini_set('memory_limit', '256M');
@@ -441,25 +444,25 @@ class myPDF extends FPDF
             $creation_mode = $value2->creation_mode;
             $rediction = $value2->rediction;
             $enable_discounts = $value2->enable_discounts;
-            if ($value2->fixe_rate == 1 and $value2->monnaie != $value2->exchange_currency and $value2->monnaie == 'USD') {
-                $prixTva = $value2->montant_tva * $value2->exchange_rate;
-                $prixTvci = $value2->montant_tvci * $value2->exchange_rate;
-                //$tolalTva += $prixTva;
-                //$totalHTVA = $value2->montant*$value2->quantite;
-                $prixU = $value2->montant * $value2->exchange_rate;
-                //$sousTotalPrixU = $value2->montant_total*$value2->exchange_rate;
-                //$prixTTC = $value2->montant_total*$value2->exchange_rate;
-                //$totalTTC += $prixTTC;
-                $monnaie = $value2->exchange_currency;
+            // Determine base amount and currency
+            $baseAmount = $value2->montant;
+            $baseCurrency = $value2->monnaie;
+
+            // Invoice currency (from contract or client setting)
+            $invoiceCurrency = $value2->exchange_currency ?? $value2->monnaie;
+
+            // Convert if needed
+            if (strtolower($baseCurrency) !== strtolower($invoiceCurrency)) {
+                $prixU = convertCurrency($baseAmount, $baseCurrency, $invoiceCurrency);
+                $prixTva = convertCurrency($value2->montant_tva, $baseCurrency, $invoiceCurrency);
+                $prixTvci = convertCurrency($value2->montant_tvci, $baseCurrency, $invoiceCurrency);
             } else {
+                $prixU = $baseAmount;
                 $prixTva = $value2->montant_tva;
                 $prixTvci = $value2->montant_tvci;
-
-                $prixU = $value2->montant;
-                //$prixTTC = $value2->montant_total;
-                //$totalTTC += $prixTTC;
-                $monnaie = $value2->monnaie;
             }
+
+            $monnaie = $invoiceCurrency; // Final displayed currency
             $ott = $value2->ott;
             // invoice-level OTT is read from config into $invoiceOtt (set before the loop)
             $prixU = $prixU;
