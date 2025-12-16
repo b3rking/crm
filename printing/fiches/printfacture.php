@@ -207,6 +207,8 @@ class myPDF extends FPDF
 }
 
 $pdf = new myPDF();
+$pdf->SetMargins(15, 15, 15);
+$pdf->SetAutoPageBreak(true, 70); // Large bottom margin — do this ONCE here
 $pdf->AliasNbPages();
 $pdf->init($facture_id,$date_creation,$nif,$adresse,$assujettiTva,$nom_client,$mois_debut,$annee,$quantite,$monnaie,$montant,$prixTva,$prixTTC,$nomService,$bandepassante);
 $pdf->AddPage();

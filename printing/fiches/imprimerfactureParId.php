@@ -257,68 +257,131 @@ class myPDF extends FPDF
 
         $this->Cell(60, 5, '', 0, 0, 'C');
     }
+
+    // old footer
+    // function footer()
+    // {
+    //     $client = $this->getClient();
+    //     $this->Ln();
+
+    //     /*if ($client['tvci'] > 0) 
+    //     {
+    //     	$this->SetY(-85);
+    // 	    $this->SetFont('Arial','B',8);
+    // 	    $this->MultiCell(180,5,iconv('UTF-8', 'windows-1252', "N.B :TCCV, veut dire taxe collectee sur les capacites vendues (cfr O.M No 540/997/2021 du 02/09/21)"),0,'L');
+    //     }*/
+
+    //     $this->SetY(-60);
+    //     //$this->Line(15,262,195,262);
+    //     $this->SetFont('Arial', '', 8);
+    //     $ot = 100000;
+    //     $qte = 5;
+    //     if ($client['show_rate'] == 1) {
+    //         if ($client['ID_client'] == 2755 or $client['ID_client'] == 118/*933*/ or $client['ID_client'] == 389 or $client['ID_client'] == 1012 or $client['ID_client'] == 1443) {
+    //             $this->MultiCell(180, 5, iconv('UTF-8', 'windows-1252', "N.B : Payable au taux vendeur du jour de la BRB plus 100000 BIF/mois de la taxe OTT ; Total  est : " . $client['quantite'] * $ot . '  BIF' . "\nPour tous vos paiements, nous vous prions de mentionner la periode payée ainsi que votre numéro d'identification: NO " . $client['billing_number'] . " Conformément a l'article 3 du contrat, le paiement est anticipatif, et se fait avant le 1er de chaque mois. L'interruption de la connexion se fait le 3 du mois pour non paiement."), 1, 'L');
+    //         }
+    //         /*elseif($client['ID_client'] == 100)
+    // 		{
+    // 			$this->MultiCell(180,5,iconv('UTF-8', 'windows-1252', "N.B : Payable au taux vendeur du jour de la BRB plus 00000 BIF/mois de la taxe OTT ; Total  est : ".$qte*$ot.'  BIF'. "\nPour tous vos paiements, nous vous prions de mentionner la periode payée ainsi que votre numéro d'identification: NO ".$client['billing_number']." Conformément a l'article 3 du contrat, le paiement est anticipatif, et se fait avant le 1er de chaque mois. L'interruption de la connexion se fait le 3 du mois pour non paiement."),1,'L');
+    // 		}*/ else {
+    //             // $this->MultiCell(180,5,iconv('UTF-8', 'windows-1252', "N.B : Payable au taux moyen du jour de la BRB : ".$client['exchange_rate'].". \n Pour tous vos paiements, nous vous prions de mentionner la periode payée ainsi que votre numéro d'identification: NO ".$client['billing_number']." Conformément a l'article 3 du contrat, le paiement est anticipatif, et se fait avant le 1er de chaque mois. L'interruption de la connexion se fait le 3 du mois pour non paiement."),1,'L');
+
+    //             $this->MultiCell(180, 5, iconv('UTF-8', 'windows-1252', "N.B : Payable au taux vendeur du jour de la BRB : " . $client['exchange_rate'] . "\n Pour tous vos paiements, nous vous prions de mentionner la periode payée ainsi que votre numéro d'identification: NO " . $client['billing_number'] . " Conformément a l'article 3 du contrat, le paiement est anticipatif, et se fait avant le 1er de chaque mois. L'interruption de la connexion se fait le 3 du mois pour non paiement."), 1, 'L');
+    //         }
+    //     } else {
+    //         $this->MultiCell(180, 5, iconv('UTF-8', 'windows-1252', "N.B : Pour tous vos paiements, nous vous prions de mentionner la periode payée ainsi que votre numéro d'identification: NO " . $client['billing_number'] . " Conformément a l'article 3 du contrat, le paiement est anticipatif, et se fait avant le 1er de chaque mois. L'interruption de la connexion se fait le 3 du mois pour non paiement."), 1, 'L');
+    //     }
+
+    //     $this->SetFont('Arial', 'B', 8);
+    //     $this->Ln();
+    //     $this->Cell(30, 4, 'N. Comptes', 0, 1);
+    //     $this->SetFont('Arial', '', 8);
+    //     $y = $this->GetY();
+    //     foreach ($this->getBanque() as $value) {
+    //         if ($this->GetY() == 277.00008333333)
+    //             $this->SetXY(60, $y);
+    //         $this->Cell(60, 4, $value->nom . ' - ' . $value->numero . ' ' . $value->monnaie, 0, 1);
+    //     }
+
+    //     // draw cachet if found (bottom-right), same pattern as logo in header()
+    //     $cachet = $this->findCachetPath();
+    //     if ($cachet) {
+    //         $w = 65; // mm
+    //         $h = 65; // mm
+    //         $x = $this->w - $this->rMargin - $w;
+    //         $y = $this->h - $this->bMargin - $h + 28; // slightly above bottom margin
+    //         list($useCachet, $cachetIsTemp) = $this->ensureSmallImage($cachet, 400, 400);
+    //         try {
+    //             $this->Image($useCachet, $x, $y, $w, $h);
+    //         } catch (Exception $e) {
+    //             // ignore image errors
+    //         }
+    //         if (!empty($cachetIsTemp) && $cachetIsTemp === true && file_exists($useCachet)) {
+    //             @unlink($useCachet);
+    //         }
+    //     }
+    // }
+
+
+
+
+
+
+    // new footer
     function footer()
     {
         $client = $this->getClient();
-        $this->Ln();
 
-        /*if ($client['tvci'] > 0) 
-	    {
-	    	$this->SetY(-85);
-		    $this->SetFont('Arial','B',8);
-		    $this->MultiCell(180,5,iconv('UTF-8', 'windows-1252', "N.B :TCCV, veut dire taxe collectee sur les capacites vendues (cfr O.M No 540/997/2021 du 02/09/21)"),0,'L');
-	    }*/
+        // Start footer at a safe position from the bottom (no need to set AutoPageBreak here)
+        $this->SetY(-70); // 70 mm from bottom — gives plenty of space
 
-        $this->SetY(-60);
-        //$this->Line(15,262,195,262);
         $this->SetFont('Arial', '', 8);
-        $ot = 100000;
-        $qte = 5;
-        if ($client['show_rate'] == 1) {
-            if ($client['ID_client'] == 2755 or $client['ID_client'] == 118/*933*/ or $client['ID_client'] == 389 or $client['ID_client'] == 1012 or $client['ID_client'] == 1443) {
-                $this->MultiCell(180, 5, iconv('UTF-8', 'windows-1252', "N.B : Payable au taux vendeur du jour de la BRB plus 100000 BIF/mois de la taxe OTT ; Total  est : " . $client['quantite'] * $ot . '  BIF' . "\nPour tous vos paiements, nous vous prions de mentionner la periode payée ainsi que votre numéro d'identification: NO " . $client['billing_number'] . " Conformément a l'article 3 du contrat, le paiement est anticipatif, et se fait avant le 1er de chaque mois. L'interruption de la connexion se fait le 3 du mois pour non paiement."), 1, 'L');
-            }
-            /*elseif($client['ID_client'] == 100)
-			{
-				$this->MultiCell(180,5,iconv('UTF-8', 'windows-1252', "N.B : Payable au taux vendeur du jour de la BRB plus 00000 BIF/mois de la taxe OTT ; Total  est : ".$qte*$ot.'  BIF'. "\nPour tous vos paiements, nous vous prions de mentionner la periode payée ainsi que votre numéro d'identification: NO ".$client['billing_number']." Conformément a l'article 3 du contrat, le paiement est anticipatif, et se fait avant le 1er de chaque mois. L'interruption de la connexion se fait le 3 du mois pour non paiement."),1,'L');
-			}*/ else {
-                // $this->MultiCell(180,5,iconv('UTF-8', 'windows-1252', "N.B : Payable au taux moyen du jour de la BRB : ".$client['exchange_rate'].". \n Pour tous vos paiements, nous vous prions de mentionner la periode payée ainsi que votre numéro d'identification: NO ".$client['billing_number']." Conformément a l'article 3 du contrat, le paiement est anticipatif, et se fait avant le 1er de chaque mois. L'interruption de la connexion se fait le 3 du mois pour non paiement."),1,'L');
 
-                $this->MultiCell(180, 5, iconv('UTF-8', 'windows-1252', "N.B : Payable au taux vendeur du jour de la BRB : " . $client['exchange_rate'] . "\n Pour tous vos paiements, nous vous prions de mentionner la periode payée ainsi que votre numéro d'identification: NO " . $client['billing_number'] . " Conformément a l'article 3 du contrat, le paiement est anticipatif, et se fait avant le 1er de chaque mois. L'interruption de la connexion se fait le 3 du mois pour non paiement."), 1, 'L');
+        // N.B. text
+        if ($client['show_rate'] == 1) {
+            if (in_array($client['ID_client'], [2755, 118, 389, 1012, 1443])) {
+                $this->MultiCell(180, 5, iconv('UTF-8', 'windows-1252', "N.B : Payable au taux vendeur du jour de la BRB plus 100000 BIF/mois de la taxe OTT ; Total est : " . ($client['quantite'] * 100000) . ' BIF' . "\nPour tous vos paiements, nous vous prions de mentionner la periode payée ainsi que votre numéro d'identification: NO " . $client['billing_number'] . " Conformément a l'article 3 du contrat, le paiement est anticipatif, et se fait avant le 1er de chaque mois. L'interruption de la connexion se fait le 3 du mois pour non paiement."), 1, 'L');
+            } else {
+                $this->MultiCell(180, 5, iconv('UTF-8', 'windows-1252', "N.B : Payable au taux vendeur du jour de la BRB : " . $client['exchange_rate'] . "\nPour tous vos paiements, nous vous prions de mentionner la periode payée ainsi que votre numéro d'identification: NO " . $client['billing_number'] . " Conformément a l'article 3 du contrat, le paiement est anticipatif, et se fait avant le 1er de chaque mois. L'interruption de la connexion se fait le 3 du mois pour non paiement."), 1, 'L');
             }
         } else {
             $this->MultiCell(180, 5, iconv('UTF-8', 'windows-1252', "N.B : Pour tous vos paiements, nous vous prions de mentionner la periode payée ainsi que votre numéro d'identification: NO " . $client['billing_number'] . " Conformément a l'article 3 du contrat, le paiement est anticipatif, et se fait avant le 1er de chaque mois. L'interruption de la connexion se fait le 3 du mois pour non paiement."), 1, 'L');
         }
 
+        // Bank accounts
+        $this->Ln(4);
         $this->SetFont('Arial', 'B', 8);
-        $this->Ln();
-        $this->Cell(30, 4, 'N. Comptes', 0, 1);
+        $this->Cell(180, 5, 'N. Comptes', 0, 1, 'L');
+
         $this->SetFont('Arial', '', 8);
-        $y = $this->GetY();
         foreach ($this->getBanque() as $value) {
-            if ($this->GetY() == 277.00008333333)
-                $this->SetXY(60, $y);
-            $this->Cell(60, 4, $value->nom . ' - ' . $value->numero . ' ' . $value->monnaie, 0, 1);
+            $this->Cell(180, 5, $value->nom . ' - ' . $value->numero . ' ' . $value->monnaie, 0, 1, 'L');
         }
 
-        // draw cachet if found (bottom-right), same pattern as logo in header()
+        // Cachet — bigger and well-positioned
         $cachet = $this->findCachetPath();
         if ($cachet) {
-            $w = 65; // mm
-            $h = 65; // mm
-            $x = $this->w - $this->rMargin - $w;
-            $y = $this->h - $this->bMargin - $h + 28; // slightly above bottom margin
-            list($useCachet, $cachetIsTemp) = $this->ensureSmallImage($cachet, 400, 400);
+            $w = 75; // Even bigger if needed
+            $h = 75;
+            $x = $this->w - $this->rMargin - $w + 3; // 15 mm from right
+            $y = $this->h - 65; // Fixed position: 80 mm from bottom (adjust this value to move up/down)
+
+            list($useCachet, $cachetIsTemp) = $this->ensureSmallImage($cachet, 800, 800);
+
             try {
                 $this->Image($useCachet, $x, $y, $w, $h);
             } catch (Exception $e) {
-                // ignore image errors
+                // ignore
             }
-            if (!empty($cachetIsTemp) && $cachetIsTemp === true && file_exists($useCachet)) {
+
+            if ($cachetIsTemp && file_exists($useCachet)) {
                 @unlink($useCachet);
             }
         }
     }
+
+
+
     function headerTable()
     {
         $this->Ln(10);
