@@ -361,10 +361,10 @@ class myPDF extends FPDF
         // Cachet — bigger and well-positioned
         $cachet = $this->findCachetPath();
         if ($cachet) {
-            $w = 75; // Even bigger if needed
-            $h = 75;
+            $w = 80; // Even bigger if needed
+            $h = 80;
             $x = $this->w - $this->rMargin - $w + 3; // 15 mm from right
-            $y = $this->h - 65; // Fixed position: 80 mm from bottom (adjust this value to move up/down)
+            $y = $this->h - 145; // Fixed position: 80 mm from bottom (adjust this value to move up/down)
 
             list($useCachet, $cachetIsTemp) = $this->ensureSmallImage($cachet, 800, 800);
 
