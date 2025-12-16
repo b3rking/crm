@@ -304,10 +304,10 @@ class myPDF extends FPDF
         // draw cachet if found (bottom-right), same pattern as logo in header()
         $cachet = $this->findCachetPath();
         if ($cachet) {
-            $w = 40; // mm
-            $h = 40; // mm
+            $w = 65; // mm
+            $h = 65; // mm
             $x = $this->w - $this->rMargin - $w;
-            $y = $this->h - $this->bMargin - $h - 5; // slightly above bottom margin
+            $y = $this->h - $this->bMargin - $h + 28; // slightly above bottom margin
             list($useCachet, $cachetIsTemp) = $this->ensureSmallImage($cachet, 400, 400);
             try {
                 $this->Image($useCachet, $x, $y, $w, $h);
