@@ -357,7 +357,7 @@ class myPDF extends FPDF
             include ROOT . 'config' . DIRECTORY_SEPARATOR . '_config_invoice.php';
         }
         // fixed OTT per invoice when applicable (e.g., USD). Default to config value if set.
-        $invoiceOtt = (isset($_invoice_ott_usd) ? floatval($_invoice_ott_usd) : 20);
+        $invoiceOtt = (isset($_invoice_ott_usd) ? floatval($_invoice_ott_usd) : 33);
         //$tolalTva_sousTotal = 0;
         //$totalTTC = 0;
         //$totalTTC_sousTotal = 0;
