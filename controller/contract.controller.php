@@ -1,12 +1,14 @@
 <?php
-require_once("model/client.class.php");
-require_once("model/contract.class.php");
-require_once("model/service.class.php");
-require_once("model/typeClient.class.php");
-require_once("model/localisation.class.php");
-require_once("model/article.class.php");
-require_once('model/User.class.php');
-require_once('model/comptabilite.class.php');
+// require_once("../model/client.class.php");
+require_once ROOT . 'model/client.class.php';
+require_once ROOT . 'model/contract.class.php';
+require_once ROOT . 'model/service.class.php';
+require_once ROOT . 'model/typeClient.class.php';
+require_once ROOT . 'model/localisation.class.php';
+require_once ROOT . 'model/article.class.php';
+require_once ROOT . 'model/User.class.php';
+require_once ROOT . 'model/comptabilite.class.php';
+
 function contract()
 {
 	$contract = new Contract();
