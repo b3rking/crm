@@ -79,8 +79,8 @@ if ($invoiceDetails && $invoiceDetails->exchange_currency) {
 $services = $contract->recupererServicesDunFacture($facture_id);
 if (!empty($services)) {
     $client['nomService'] = $services[0]->nomService;
-    $client['bandepassante'] = $services[0]->bande_passante;
-    $client['quantite'] = $services[0]->quantite ?? 1; // Add this
+    $client['bandepassante'] = isset($services[0]->bande_passante) ? $services[0]->bande_passante : '';
+    $client['quantite'] = isset($services[0]->quantite) ? $services[0]->quantite : 1; // Add this
 } else {
     $client['nomService'] = '';
     $client['bandepassante'] = '';
@@ -122,7 +122,7 @@ $client['Nom_client'] = isset($client['nom_client']) ? $client['nom_client'] : '
 $services = $contract->recupererServicesDunFacture($facture_id);
 if (!empty($services)) {
     $client['nomService'] = $services[0]->nomService;
-    $client['bandepassante'] = $services[0]->bande_passante;
+    $client['bandepassante'] = isset($services[0]->bande_passante) ? $services[0]->bande_passante : '';
 } else {
     $client['nomService'] = '';
     $client['bandepassante'] = '';
