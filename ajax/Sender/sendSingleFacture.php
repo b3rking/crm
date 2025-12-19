@@ -128,8 +128,32 @@ if (!empty($services)) {
     $client['bandepassante'] = '';
 }
 
-$client['exchange_currency'] = isset($client['exchange_currency']) ? $client['exchange_currency'] : (isset($client['exchange_rate']) ? $client['exchange_rate'] : '');
-$client['billing_date'] = isset($client['billing_date']) ? $client['billing_date'] : $client['date_creation'];
+// Ensure billing_date and exchange_currency are correctly set (prefer explicit invoice fields)
+if (isset($invoiceDetails->billing_date) && !empty($invoiceDetails->billing_date)) {
+    // Use the DB billing_date (expected format YYYY-MM-DD) so comparisons behave correctly
+    $client['billing_date'] = $invoiceDetails->billing_date;
+} else {
+    // Fallback: convert date_creation (d/m/Y) to Y-m-d for reliable comparisons
+    $dateObj = DateTime::createFromFormat('d/m/Y', $client['date_creation']);
+    $client['billing_date'] = $dateObj ? $dateObj->format('Y-m-d') : $client['date_creation'];
+}
+
+if (isset($invoiceDetails->exchange_currency) && !empty($invoiceDetails->exchange_currency)) {
+    $client['exchange_currency'] = strtolower($invoiceDetails->exchange_currency);
+} elseif (isset($invoiceDetails->monnaie) && !empty($invoiceDetails->monnaie)) {
+    $client['exchange_currency'] = strtolower($invoiceDetails->monnaie);
+} else {
+    // Last resort: keep a sensible default (BIF) to ensure invoice display logic can run
+    $client['exchange_currency'] = (isset($client['exchange_currency']) && in_array(strtolower($client['exchange_currency']), ['usd', 'bif', 'eur'])) ? strtolower($client['exchange_currency']) : 'bif';
+}
+
+// Ensure quantity is available (used in OTT calculation)
+$servicesForQuant = $contract->recupererServicesDunFacture($facture_id);
+if (!empty($servicesForQuant)) {
+    $client['quantite'] = $servicesForQuant[0]->quantite ?? 1;
+} else {
+    $client['quantite'] = 1;
+}
 
 require_once ROOT . "printing/fiches/imprimerfactureParId.php";
 $pdf = new myPDF();
@@ -231,7 +255,7 @@ if (!mb_check_encoding($subject, 'UTF-8')) {
 
 //$sent = send_email($validEmails, $subject, $body, [$tmpFile], true);
 try {
-//    $sent = send_email($validEmails, $subject, $body, [$tmpFile], true);
+    //    $sent = send_email($validEmails, $subject, $body, [$tmpFile], true);
     $sent = send_email($validEmails, $subject, $body, [$tmpFile => 'facture_' . $safeNum . '.pdf'], true);
 } catch (Exception $e) {
     echo json_encode([
