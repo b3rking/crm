@@ -16,6 +16,10 @@ require_once ROOT . 'model/comptabilite.class.php';
 require_once ROOT . 'config/_config_mail.php';
 require_once ROOT . 'controller/mail.controller.php';
 
+error_reporting(E_ALL & ~E_DEPRECATED);
+ini_set('display_errors', 1);
+
+
 $contract = new Contract();
 $comptabilite = new Comptabilite();
 $banque = $comptabilite->getBanqueActiveAndVisibleOnInvoice();
@@ -32,6 +36,59 @@ $con = connection();
 $query = $con->prepare("SELECT cl.ID_client,billing_number,nom_client,adresse,nif,assujettiTVA,telephone,fac.facture_id,fac.numero,DATE_FORMAT(fac.date_creation,'%d/%m/%Y') AS date_creation,show_rate,exchange_rate,tvci,mail FROM client cl,facture fac WHERE cl.ID_client = fac.ID_client AND fac.facture_id = ?");
 $query->execute(array($facture_id)) or die(print_r($query->errorInfo()));
 $factureData = $query->fetch(PDO::FETCH_OBJ);
+
+
+// In sendSingleFacture.php, after getting $factureData:
+
+// Get the actual billing_date from the database
+$queryDate = $con->prepare("SELECT billing_date, exchange_currency FROM facture WHERE facture_id = ?");
+$queryDate->execute(array($facture_id));
+$invoiceData = $queryDate->fetch(PDO::FETCH_OBJ);
+
+
+
+// In sendSingleFacture.php, AFTER getting $factureData and BEFORE calling require_once for PDF:
+
+// Get the actual billing_date and exchange_currency from the facture table
+$queryInvoice = $con->prepare("SELECT billing_date, exchange_currency, monnaie FROM facture WHERE facture_id = ?");
+$queryInvoice->execute(array($facture_id));
+$invoiceDetails = $queryInvoice->fetch(PDO::FETCH_OBJ);
+
+// Set billing_date - this is CRITICAL
+if ($invoiceDetails && $invoiceDetails->billing_date) {
+    $client['billing_date'] = $invoiceDetails->billing_date; // Should be YYYY-MM-DD format
+} else {
+    // Fallback: convert date_creation from d/m/Y to Y-m-d
+    $dateObj = DateTime::createFromFormat('d/m/Y', $factureData->date_creation);
+    $client['billing_date'] = $dateObj ? $dateObj->format('Y-m-d') : date('Y-m-d');
+}
+
+// Set exchange_currency - this is ALSO CRITICAL
+if ($invoiceDetails && $invoiceDetails->exchange_currency) {
+    $client['exchange_currency'] = strtolower($invoiceDetails->exchange_currency);
+} elseif ($invoiceDetails && $invoiceDetails->monnaie) {
+    $client['exchange_currency'] = strtolower($invoiceDetails->monnaie);
+} else {
+    $client['exchange_currency'] = 'bif'; // Default
+}
+
+// Remove this line - it's problematic:
+// $client['exchange_currency'] = isset($client['exchange_currency']) ? $client['exchange_currency'] : (isset($client['exchange_rate']) ? $client['exchange_rate'] : '');
+
+// Also add quantite if needed (for OTT calculation)
+$services = $contract->recupererServicesDunFacture($facture_id);
+if (!empty($services)) {
+    $client['nomService'] = $services[0]->nomService;
+    $client['bandepassante'] = $services[0]->bande_passante;
+    $client['quantite'] = $services[0]->quantite ?? 1; // Add this
+} else {
+    $client['nomService'] = '';
+    $client['bandepassante'] = '';
+    $client['quantite'] = 1; // Default
+}
+
+
+
 
 if (!$factureData) {
     echo "Erreur: Facture non trouvée";
@@ -57,10 +114,20 @@ $client = [
     'mail' => $factureData->mail
 ];
 
+
 // Add safe fallbacks for keys expected by the PDF generator
 $client['Nom_client'] = isset($client['nom_client']) ? $client['nom_client'] : '';
-$client['nomService'] = isset($client['nomService']) ? $client['nomService'] : '';
-$client['bandepassante'] = isset($client['bandepassante']) ? $client['bandepassante'] : '';
+
+// Get service details for this invoice
+$services = $contract->recupererServicesDunFacture($facture_id);
+if (!empty($services)) {
+    $client['nomService'] = $services[0]->nomService;
+    $client['bandepassante'] = $services[0]->bande_passante;
+} else {
+    $client['nomService'] = '';
+    $client['bandepassante'] = '';
+}
+
 $client['exchange_currency'] = isset($client['exchange_currency']) ? $client['exchange_currency'] : (isset($client['exchange_rate']) ? $client['exchange_rate'] : '');
 $client['billing_date'] = isset($client['billing_date']) ? $client['billing_date'] : $client['date_creation'];
 
@@ -72,23 +139,50 @@ $pdf->init($client);
 $pdf->setBanque($banque);
 $pdf->AddPage();
 $pdf->headerTable();
-$pdf->SetWidths(array(50, 20, 25, 25, 25, 25));
+$pdf->SetWidths(array(30, 20, 20, 20, 20, 25, 20, 25));
 $pdf->viewTable($contract, $facture_id);
 
 
 $attachment = $pdf->Output('facture_' . $pdf->getClient()['numero'] . '.pdf', 'S');
 
 // ensure temp directory exists
-$tmpDir = ROOT . 'uploads/tmp/';
+$tmpDir = ROOT . 'uploads' . DIRECTORY_SEPARATOR . 'tmp';
 if (!is_dir($tmpDir)) {
-    @mkdir($tmpDir, 0755, true);
+    mkdir($tmpDir, 0755, true);
+}
+if (!is_writable($tmpDir)) {          // ← add this line
+    echo json_encode([
+        'success' => false,
+        'message' => 'Temp directory not writable',
+        'type'    => 'error'
+    ]);
+    exit;
 }
 
 // sanitize invoice number to avoid slashes or invalid filename chars
 $rawNum = $pdf->getClient()['numero'];
 $safeNum = preg_replace('/[^A-Za-z0-9_\-]/', '_', $rawNum);
 $tmpFile = $tmpDir . 'facture_' . $safeNum . '_' . $facture_id . '.pdf';
-@file_put_contents($tmpFile, $attachment);
+
+if (file_put_contents($tmpFile, $attachment) === false) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'PDF creation failed',
+        'type'    => 'error'
+    ]);
+    exit;
+}
+
+
+
+if (!file_exists($tmpFile) || filesize($tmpFile) === 0) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'PDF file missing or empty',
+        'type'    => 'error'
+    ]);
+    exit;
+}
 
 // Parse emails with multiple delimiters: comma, semicolon, space, slash, dash, pipe
 $emailString = $factureData->mail;
@@ -135,7 +229,18 @@ if (!mb_check_encoding($subject, 'UTF-8')) {
     $subject = mb_convert_encoding($subject, 'UTF-8');
 }
 
-$sent = send_email($validEmails, $subject, $body, [$tmpFile], true);
+//$sent = send_email($validEmails, $subject, $body, [$tmpFile], true);
+try {
+//    $sent = send_email($validEmails, $subject, $body, [$tmpFile], true);
+    $sent = send_email($validEmails, $subject, $body, [$tmpFile => 'facture_' . $safeNum . '.pdf'], true);
+} catch (Exception $e) {
+    echo json_encode([
+        'success' => false,
+        'message' => $e->getMessage(),
+        'type'    => 'error'
+    ]);
+    exit;
+}
 
 if ($sent) {
     $contract->update_Sent_Facture($facture_id, 1);
