@@ -355,7 +355,7 @@ class myPDF extends FPDF
                 $creation_mode = $value2->creation_mode;
                 $rediction = $value2->rediction;
                 $enable_discounts = $value2->enable_discounts;
-                
+
                 // Determine base amount and currency
                 $baseAmount = $value2->montant;
                 $baseCurrency = $value2->monnaie;
@@ -375,7 +375,7 @@ class myPDF extends FPDF
                 }
 
                 $monnaie = $invoiceCurrency; // Final displayed currency
-                $ott = $value2->ott;
+                $ott = (property_exists($value2, 'exempt_ott') && intval($value2->exempt_ott) === 1) ? 0 : $value2->ott;
                 $totalTva += $prixTva;
                 $totalTvci += $prixTvci;
                 $totalOtt += $ott;
@@ -543,7 +543,7 @@ class myPDF extends FPDF
             //            else
             //                $this->Row(['Total','','',number_format($totalprixU).' '.$monnaie,number_format($totalPrixTvaShow).' '.$monnaie,number_format($totalTTC).' '.$monnaie]);
 
-            $this->Row(['Total', '', '', number_format($totalprixU) . ' ' . $monnaie, number_format($totalPrixTvaShow) . ' ' . $monnaie, number_format($totalTTC) . ' ' . $monnaie, $totaltOtt, number_format($totalTTC + $totalOtt) . ' ' . $monnaie]);
+            $this->Row(['Total', '', '', number_format($totalprixU) . ' ' . $monnaie, number_format($totalPrixTvaShow) . ' ' . $monnaie, number_format($totalTTC) . ' ' . $monnaie, number_format($totalOtt) . ' ' . $monnaie, number_format($totalTTC + $totalOtt) . ' ' . $monnaie]);
 
 
 

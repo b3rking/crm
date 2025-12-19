@@ -275,6 +275,13 @@ foreach ($comptabilite->getMonnaies() as $value) {
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="col-lg-2 col-md-2">
+                                        <div class="form-group">
+                                            <label class="btn">
+                                                <input type="checkbox" id="no_ott"> Exonérer OTT
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                             </form>
                         </div>

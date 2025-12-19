@@ -394,7 +394,7 @@ class myPDF extends FPDF
         $billedMonths = isset($client['quantite']) ? intval($client['quantite']) : 1;
         if ($billedMonths < 1) $billedMonths = 1;
 
-        $this->Cell(180, 5, 'Facture No ' . $client['numero'] . ' du ' . $client['date_creation'], 0, 1, 'C');
+        $this->Cell(180, 5, 'Facture No ' . $client['numero'] . ' du ' . $client['date_creation'] . (isset($invoiceExemptOtt) && $invoiceExemptOtt ? '  (Exonéré OTT)' : ''), 0, 1, 'C');
         $this->Ln(10);
 
         $this->Cell(60, 5, 'A. Identification du Vendeur', 0, 1);
@@ -501,6 +501,11 @@ class myPDF extends FPDF
             $lines = $rawLines;
         }
         $totalLines = count($lines);
+        // Determine invoice-level OTT exemption (persisted flag)
+        $invoiceExemptOtt = false;
+        if ($totalLines > 0 && property_exists($lines[0], 'exempt_ott') && intval($lines[0]->exempt_ott) === 1) {
+            $invoiceExemptOtt = true;
+        }
         foreach ($lines as $idx => $value2) {
             $i++;
             //$JourDePlus = $value2->JourDePlus;
@@ -531,7 +536,7 @@ class myPDF extends FPDF
             }
 
             $monnaie = $invoiceCurrency; // Final displayed currency
-            $ott = $value2->ott;
+            $ott = ($invoiceExemptOtt ? 0 : $value2->ott);
             // invoice-level OTT is read from config into $invoiceOtt (set before the loop)
             $prixU = $prixU;
             $prixTva = $prixTva;
@@ -567,9 +572,14 @@ class myPDF extends FPDF
                         $displayOtt = (strtolower($client['exchange_currency']) == 'bif') ? $ott : '';
                         // For USD, add invoice-level OTT to the last line's displayed total and show OTT there
                         if (strtolower($client['exchange_currency']) == 'usd' && $idx === $totalLines - 1) {
-                            $totalUsdOtt = $invoiceOtt * $billedMonths;  // ← Multiplied!
-                            $displayOtt = number_format($totalUsdOtt) . ' ' . $monnaie;
-                            $displayTotal = number_format($prixTTC + $totalUsdOtt) . ' ' . $monnaie;
+                            if (!$invoiceExemptOtt) {
+                                $totalUsdOtt = $invoiceOtt * $billedMonths;
+                                $displayOtt = number_format($totalUsdOtt) . ' ' . $monnaie;
+                                $displayTotal = number_format($prixTTC + $totalUsdOtt) . ' ' . $monnaie;
+                            } else {
+                                $displayOtt = '';
+                                $displayTotal = number_format($prixTTC) . ' ' . $monnaie;
+                            }
                         } else {
                             $displayTotal = number_format($prixTTC) . ' ' . $monnaie;
                         }
@@ -606,9 +616,14 @@ class myPDF extends FPDF
                     if (in_array(strtolower($client['exchange_currency']), ['bif', 'usd'])) {
                         $displayOtt = (strtolower($client['exchange_currency']) == 'bif') ? $ott : '';
                         if (strtolower($client['exchange_currency']) == 'usd' && $idx === $totalLines - 1) {
-                            $totalUsdOtt = $invoiceOtt * $billedMonths;  // ← Multiplied!
-                            $displayOtt = number_format($totalUsdOtt) . ' ' . $monnaie;
-                            $displayTotal = number_format($prixTTC + $totalUsdOtt) . ' ' . $monnaie;
+                            if (!$invoiceExemptOtt) {
+                                $totalUsdOtt = $invoiceOtt * $billedMonths;
+                                $displayOtt = number_format($totalUsdOtt) . ' ' . $monnaie;
+                                $displayTotal = number_format($prixTTC + $totalUsdOtt) . ' ' . $monnaie;
+                            } else {
+                                $displayOtt = '';
+                                $displayTotal = number_format($prixTTC) . ' ' . $monnaie;
+                            }
                         } else {
                             $displayTotal = number_format($prixTTC) . ' ' . $monnaie;
                         }
@@ -665,9 +680,14 @@ class myPDF extends FPDF
                     if (in_array(strtolower($client['exchange_currency']), ['bif', 'usd'])) {
                         $displayOtt = (strtolower($client['exchange_currency']) == 'bif') ? ($ott . ' BIF') : '';
                         if (strtolower($client['exchange_currency']) == 'usd' && $idx === $totalLines - 1) {
-                            $totalUsdOtt = $invoiceOtt * $billedMonths;  // ← Multiplied!
-                            $displayOtt = number_format($totalUsdOtt) . ' ' . $monnaie;
-                            $displayTotal = number_format($prixTTC + $totalUsdOtt) . ' ' . $monnaie;
+                            if (!$invoiceExemptOtt) {
+                                $totalUsdOtt = $invoiceOtt * $billedMonths;
+                                $displayOtt = number_format($totalUsdOtt) . ' ' . $monnaie;
+                                $displayTotal = number_format($prixTTC + $totalUsdOtt) . ' ' . $monnaie;
+                            } else {
+                                $displayOtt = '';
+                                $displayTotal = number_format($prixTTC) . ' ' . $monnaie;
+                            }
                         } else {
                             $displayTotal = number_format($prixTTC) . ' ' . $monnaie;
                         }
@@ -754,12 +774,21 @@ class myPDF extends FPDF
 
         if ($client['billing_date'] >= '2023-09-01') {
             if (in_array(strtolower($client['exchange_currency']), ['bif', 'usd'])) {
-                // For BIF we use per-line totalOtt; for USD include invoice-level OTT
-                $displayOttTotal = $totalOtt;
-                if (strtolower($client['exchange_currency']) == 'usd') {
-                    $displayOttTotal += ($invoiceOtt * $billedMonths);  // ← multiplied by months
+                // For BIF we use per-line totalOtt; for USD include invoice-level OTT when not exempt
+                if ($invoiceExemptOtt) {
+                    $displayOttTotal = 0;
+                } else {
+                    $displayOttTotal = $totalOtt;
+                    if (strtolower($client['exchange_currency']) == 'usd') {
+                        $displayOttTotal += ($invoiceOtt * $billedMonths);  // ← multiplied by months
+                    }
                 }
-                $ottLabel = (strtolower($client['exchange_currency']) == 'bif') ? ($displayOttTotal . ' BIF') : number_format($displayOttTotal) . ' ' . $monnaie;
+                $ottLabel = '';
+                if (strtolower($client['exchange_currency']) == 'bif' && $displayOttTotal > 0) {
+                    $ottLabel = $displayOttTotal . ' BIF';
+                } elseif (strtolower($client['exchange_currency']) == 'usd' && $displayOttTotal > 0) {
+                    $ottLabel = number_format($displayOttTotal) . ' ' . $monnaie;
+                }
                 $row = ['Total', '', '', number_format($totalprixU) . ' ' . $monnaie, number_format($totalPrixTvaShow) . ' ' . $monnaie, number_format($totalTTC) . ' ' . $monnaie, $ottLabel, number_format($totalTTC + $displayOttTotal) . ' ' . $monnaie];
             }
         }

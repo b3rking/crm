@@ -446,7 +446,8 @@ function creefacture(datefacture, monnaie, mois, annee, tva, customer) {
                     "&idcontract=" +
                     idcontract +
                     "&test_billing_cycle=" +
-                    test_billing_cycle,
+                    test_billing_cycle +
+                    "&no_ott=" + (document.getElementById('no_ott').checked ? 1 : 0),
                 true
             );
             xhttp.send();
@@ -1975,7 +1976,8 @@ function updateFacture(
                     "&iduser=" +
                     iduser +
                     "&test_billing_cycle=" +
-                    test_billing_cycle,
+                    test_billing_cycle +
+                    "&no_ott=" + (document.getElementById('no_ott'+i).checked ? 1 : 0),
                 true
             );
             xhttp.send();
