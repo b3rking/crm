@@ -906,6 +906,11 @@ foreach ($comptabilite->getMonnaies() as $value) {
                                                 <span class="badge badge-secondary">Non envoyée</span>
                                             <?php } ?>
                                         </a>
+
+                                        <!-- Resend button (tries to resend the invoice email) -->
+                                        <a href="javascript:void(0)" onclick="resendSingleFacture(<?= $value->facture_id ?>)" data-toggle="tooltip" data-original-title="Renvoyer par email">
+                                            <i class="mdi mdi-email-send text-primary m-r-10" data-toggle="tooltip" data-original-title="Renvoyer"></i>
+                                        </a>
                                         <?php
                                         if ($m) {
                                         ?>

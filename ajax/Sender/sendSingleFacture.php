@@ -155,6 +155,9 @@ if (!empty($servicesForQuant)) {
     $client['quantite'] = 1;
 }
 
+// Debug: log service / bandwidth / quantity for diagnosis (temporary)
+error_log('sendSingleFacture debug: nomService=' . (isset($client['nomService']) ? $client['nomService'] : '') . ' | bandepassante=' . (isset($client['bandepassante']) ? $client['bandepassante'] : '') . ' | quantite=' . (isset($client['quantite']) ? $client['quantite'] : ''));
+
 require_once ROOT . "printing/fiches/imprimerfactureParId.php";
 $pdf = new myPDF();
 $pdf->SetLeftMargin(15.2);

@@ -1784,7 +1784,7 @@ function updateFacture(
         msg.innerHTML =
             "Veuillez renseigner tous les champs en etoile et la quantite doit etre > 0";
     } else {
-    /*else if (next_billing_date != '' && billing_date < next_billing_date) 
+        /*else if (next_billing_date != '' && billing_date < next_billing_date) 
     {
         swal({
             title :"",
@@ -3179,6 +3179,108 @@ function sendSingleFacture(facture_id) {
                     "GET",
                     "ajax/Sender/sendSingleFacture.php?facture_id=" +
                         facture_id,
+                    true
+                );
+                xhttp.send();
+            }
+        }
+    );
+}
+
+/**
+ * Resend a previously sent invoice by email
+ * @param {number} facture_id - The ID of the invoice to resend
+ */
+function resendSingleFacture(facture_id) {
+    if (!facture_id) {
+        swal({
+            title: "Erreur",
+            text: "ID de facture manquant",
+            type: "error",
+            timer: 3000,
+            showConfirmButton: false,
+        });
+        return;
+    }
+
+    swal(
+        {
+            title: "Confirmation",
+            text: "Êtes-vous sûr de vouloir renvoyer cette facture par email?",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonClass: "btn-danger",
+            confirmButtonText: "Oui, renvoyer",
+            cancelButtonText: "Annuler",
+            closeOnConfirm: false,
+        },
+        function (isConfirm) {
+            if (isConfirm) {
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4) {
+                        try {
+                            var response = JSON.parse(this.responseText);
+
+                            if (response.success) {
+                                swal(
+                                    {
+                                        title: "Succès",
+                                        text: response.message,
+                                        type: "success",
+                                        timer: 3000,
+                                        showConfirmButton: false,
+                                    },
+                                    function () {
+                                        setTimeout(function () {
+                                            document.location.reload();
+                                        }, 500);
+                                    }
+                                );
+                            } else {
+                                var errorType = response.type || "error";
+                                swal({
+                                    title:
+                                        errorType === "warning"
+                                            ? "Attention"
+                                            : "Erreur",
+                                    text: response.message,
+                                    type: errorType,
+                                    timer: 4000,
+                                    showConfirmButton: false,
+                                });
+                            }
+                        } catch (e) {
+                            // Fallback for non-JSON responses
+                            swal({
+                                title: "Erreur",
+                                text:
+                                    this.responseText ||
+                                    "Erreur lors de l'envoi",
+                                type: "error",
+                                timer: 3000,
+                                showConfirmButton: false,
+                            });
+                        }
+                    }
+                };
+
+                xhttp.onerror = function () {
+                    swal({
+                        title: "Erreur réseau",
+                        text: "Une erreur est survenue lors de l'envoi",
+                        type: "error",
+                        timer: 3000,
+                        showConfirmButton: false,
+                    });
+                };
+
+                // Use the same sender endpoint; include a query param to indicate this is a resend
+                xhttp.open(
+                    "GET",
+                    "ajax/Sender/sendSingleFacture.php?facture_id=" +
+                        facture_id +
+                        "&resend=1",
                     true
                 );
                 xhttp.send();

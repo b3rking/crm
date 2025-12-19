@@ -458,8 +458,12 @@ class myPDF extends FPDF
         //$this->Ln(3);
         $this->Cell(60, 5, iconv('UTF-8', 'windows-1252', 'Résident à : ' . $client['adresse']), 0, 1);
         //$this->Ln(3);
-        $this->Cell(60, 5, iconv('UTF-8', 'windows-1252', 'Service : ' . $client['nomService']), 0, 1);
-        $this->Cell(60, 5, iconv('UTF-8', 'windows-1252', 'Bande Passante : ' . $client['bandepassante']), 0, 1);
+        if (!empty(trim($client['nomService'] ?? ''))) {
+            $this->Cell(60, 5, iconv('UTF-8', 'windows-1252', 'Service : ' . $client['nomService']), 0, 1);
+        }
+        if (!empty(trim($client['bandepassante'] ?? ''))) {
+            $this->Cell(60, 5, iconv('UTF-8', 'windows-1252', 'Bande Passante : ' . $client['bandepassante']), 0, 1);
+        }
 
 
         $this->SetFont('Arial', '', 9);
