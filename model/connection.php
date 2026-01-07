@@ -3,7 +3,7 @@ function connection()
 {
 	try{
 
-		$bdd= new PDO('mysql:host=localhost;dbname=spi_buja;charset=utf8',"admin","202@5+sp100");
+		$bdd= new PDO('mysql:host=localhost;dbname=spi_buja;charset=utf8',"root","");
 		return $bdd;
 	}
 	catch(Exception $e)

@@ -11,6 +11,16 @@
         var $widths;
         var $aligns;
 
+        function Cell($w, $h = 0, $txt = '', $border = 0, $ln = 0, $align = '', $fill = false, $link = '')
+        {
+            parent::Cell($w, $h, utf8_decode($txt), $border, $ln, $align, $fill, $link);
+        }
+
+        function MultiCell($w, $h, $txt, $border = 0, $align = 'J', $fill = false)
+        {
+            parent::MultiCell($w, $h, utf8_decode($txt), $border, $align, $fill);
+        }
+
         function SetWidths($w)
         {
             //Set the array of column widths
@@ -173,8 +183,9 @@
                 $total_dette_monnaie_locale += $value->solde;
             }
 
+            $this->SetX(25.2);
             $this->SetFont('Arial', 'B', 9);
-            $this->Cell(150, 10, 'Total ' . $tbMonnaie[0], 'TLB', 0); // Updated width
+            $this->Cell(128, 10, 'Total ' . $tbMonnaie[0], 'TLB', 0); // Updated width
             $this->Cell(40, 10, number_format(round($total_dette_monnaie_locale)) . ' ' . $tbMonnaie[0], 'TRB', 0);
         }
     }
