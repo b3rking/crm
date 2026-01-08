@@ -231,24 +231,26 @@ class Client
     function getClientDelinquants()
     {
         $con = connection();
-        $query = $con->prepare("SELECT DISTINCT 
-                c.ID_client,
-                c.billing_number,
-                c.Nom_client,
-                c.solde,
-                c.telephone,
-                c.mail,
-                c.adresse,
-                c.personneDeContact,
-                sic.bandepassante
-            FROM client c
-            LEFT JOIN contract cont ON c.ID_client = cont.ID_client
-            LEFT JOIN serviceinclucontract sic ON cont.ID_contract = sic.ID_contract
-            WHERE c.type_client = 'paying' 
-                AND c.etat = 'actif' 
-                AND c.solde >= 70000 
-                AND c.isDelete = 0 
-            ORDER BY c.billing_number ASC"
+        $query = $con->prepare(
+            "SELECT 
+            c.ID_client,
+            c.billing_number,
+            c.Nom_client,
+            c.solde,
+            c.telephone,
+            c.mail,
+            c.adresse,
+            c.personneDeContact,
+            GROUP_CONCAT(DISTINCT sic.bandepassante SEPARATOR ', ') as bandepassante
+        FROM client c
+        LEFT JOIN contract cont ON c.ID_client = cont.ID_client
+        LEFT JOIN serviceinclucontract sic ON cont.ID_contract = sic.ID_contract
+        WHERE c.type_client = 'paying' 
+            AND c.etat = 'actif' 
+            AND c.solde >= 70000 
+            AND c.isDelete = 0 
+        GROUP BY c.ID_client, c.billing_number, c.Nom_client, c.solde, c.telephone, c.mail, c.adresse, c.personneDeContact
+        ORDER BY c.billing_number ASC"
         );
         $query->execute();
         return $query->fetchAll(PDO::FETCH_OBJ);
