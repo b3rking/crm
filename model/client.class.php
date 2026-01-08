@@ -231,7 +231,7 @@ class Client
     function getClientDelinquants()
     {
         $con = connection();
-        $query = $con->prepare("SELECT 
+        $query = $con->prepare("SELECT DISTINCT 
                 c.ID_client,
                 c.billing_number,
                 c.Nom_client,
