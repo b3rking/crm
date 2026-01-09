@@ -213,7 +213,7 @@ if (!file_exists($tmpFile) || filesize($tmpFile) === 0) {
 
 // Parse emails with multiple delimiters: comma, semicolon, space, slash, dash, pipe
 $emailString = $factureData->mail;
-$emailString = preg_replace('#[,;\s/\-\|]+#', ',', $emailString); // normalize delimiters to comma
+$emailString = preg_replace('#[,;\s/\|]|(?<=\s)-|-(?=\s)#', ',', $emailString);
 $emails = array_filter(array_map('trim', explode(',', $emailString)));
 
 // Validate email addresses and collect valid ones
