@@ -515,12 +515,39 @@ class ticket
 		return $query;
 	}*/
     function recupererFicheRecuperation($idfiche)
-	{//SELECT cl.ID_client,Nom_client,telephone,mail,adresse,nomService,dateRecuperation,nom_user FROM client cl,serviceinclucontract si,service s,contract co,fiches f,contenufiches c,tickets t,user u WHERE si.ID_contract = co.ID_contract AND si.ID_service = s.ID_service AND co.ID_client = cl.ID_client AND f.ID_fiches = c.ID_fiches AND c.ID_ticket = t.id AND t.customer_id = cl.ID_client AND u.ID_user = f.ID_user AND t.ticket_type = 'recuperation' AND f.ID_fiches = ?
-		$con = connection();
-		$query = $con->prepare("SELECT cl.ID_client,billing_number,Nom_client,telephone,mobile_phone,mail,adresse,dateRecuperation,nom_user,type_client FROM client cl,fiches f,contenufiches c,tickets t,user u WHERE f.ID_fiches = c.ID_fiches AND f.ID_fiches = t.fiche_id AND t.customer_id = cl.ID_client AND u.ID_user = f.ID_user AND f.type_fiche = 'recuperation' AND f.ID_fiches =? ");
-		$query->execute(array($idfiche)) or die(print_r($query->errorInfo()));
-		return $query;
-	}
+{
+    $con = connection();
+    $query = $con->prepare("
+        SELECT 
+            cl.ID_client,
+            cl.billing_number,
+            cl.Nom_client,
+            cl.telephone,
+            cl.mobile_phone,
+            cl.mail,
+            cl.adresse,
+            dateRecuperation,
+            nom_user,
+            type_client,
+            co.monnaie,    -- NEW: added from contract table
+            co.amount      -- NEW: added from contract table
+        FROM client cl,
+             fiches f,
+             contenufiches c,
+             tickets t,
+             user u,
+             contract co   -- NEW: added contract table
+        WHERE f.ID_fiches = c.ID_fiches 
+        AND f.ID_fiches = t.fiche_id 
+        AND t.customer_id = cl.ID_client 
+        AND u.ID_user = f.ID_user 
+        AND co.ID_client = cl.ID_client  -- NEW: join condition
+        AND f.type_fiche = 'recuperation' 
+        AND f.ID_fiches = ?
+    ");
+    $query->execute(array($idfiche)) or die(print_r($query->errorInfo()));
+    return $query;
+}
 	/*function recupererFicheInstallation($idfiche)
 	{ 
 	//SELECT cl.ID_client,Nom_client,telephone,mail,adresse,nomService,dateInstallation,nom_user FROM client cl,serviceinclucontract si,service s,contract co,fiches f,contenufiches c,tickets t,user u WHERE si.ID_contract = co.ID_contract AND si.ID_service = s.ID_service AND co.ID_client = cl.ID_client AND f.ID_fiches = c.ID_fiches AND c.ID_ticket = t.id AND t.customer_id = cl.ID_client AND u.ID_user = f.ID_user AND t.ticket_type = 'installation' AND f.ID_fiches = ?
