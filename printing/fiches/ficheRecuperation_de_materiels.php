@@ -97,7 +97,9 @@ class myPDF extends FPDF
         $this->Cell(95, 4, ': '.iconv('UTF-8', 'windows-1252', $this->getTb_client()['adresse']), 0, 1);
         $this->Ln(2);
         $this->Cell(35, 4, 'Montant', 0, 0);
-        $this->Cell(95, 4, ': '.$this->getTb_client()['amount'].' '.$this->getTb_client()['monnaie'], 0, 1);
+        $amount = $this->getTb_client()['amount'] ?? 'N/A';
+        $monnaie = $this->getTb_client()['monnaie'] ?? '';
+        $this->Cell(95, 4, ': '.$amount.' '.$monnaie, 0, 1);
         
         // $this->Line(180, 88, 15, 88); // Corrigé: changé de 95 à 88
         
